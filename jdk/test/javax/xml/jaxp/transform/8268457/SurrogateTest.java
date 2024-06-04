@@ -24,11 +24,12 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -61,10 +62,11 @@ public class SurrogateTest {
     public void toHTMLTest() throws Exception {
         String out = "SurrogateTest1out.html";
         String expected = TEST_SRC + File.separator + "SurrogateTest1.html";
+        String xml = TEST_SRC + File.separator + "SurrogateTest1.xml";
         String xsl = TEST_SRC + File.separator + "SurrogateTest1.xsl";
 
         try (FileInputStream tFis = new FileInputStream(xsl);
-            InputStream fis = this.getClass().getResourceAsStream("SurrogateTest1.xml");
+            InputStream fis = new FileInputStream(xml);
             FileOutputStream fos = new FileOutputStream(out)) {
 
             Source tSrc = new StreamSource(tFis);
@@ -76,7 +78,7 @@ public class SurrogateTest {
             Result res = new StreamResult(fos);
             t.transform(src, res);
         }
-        compareWithGold(expected, out);
+        Assert.assertTrue(compareWithGold(expected, out));
     }
 
     public void handlerTest() throws Exception {
@@ -86,15 +88,15 @@ public class SurrogateTest {
         SAXParser sp = spf.newSAXParser();
         TestHandler th = new TestHandler();
         sp.parse(xmlFile, th);
-        compareStringWithGold(TEST_SRC + File.separator + "SurrogateTest2.txt", th.sb.toString());
+        Assert.assertTrue(compareLinesWithGold(TEST_SRC + File.separator + "SurrogateTest2.txt", th.lines));
     }
 
     private static class TestHandler extends DefaultHandler {
-        private StringBuilder sb = new StringBuilder();
+        private List<String> lines = new ArrayList<>();
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-            sb.append( localName + "@attr:" + attributes.getValue("attr") + '\n');
+            lines.add( localName + "@attr:" + attributes.getValue("attr"));
         }
     }
 
@@ -144,19 +146,17 @@ public class SurrogateTest {
     }
 
     /**
-     * Compare contents of golden file with a test output string.
+     * Compare contents of golden file with test output list line by line.
      * return true if they're identical.
      * @param goldfile Golden output file name.
-     * @param string test string.
-     * @return true if file's content is identical to given string.
-     *         false if file's content is not identical to given string.
+     * @param lines test output list.
+     * @return true if file's content is identical to given list.
+     *         false if file's content is not identical to given list.
      * @throws IOException if an I/O error occurs reading from the file or a
      *         malformed or unmappable byte sequence is read
      */
-    public static boolean compareStringWithGold(String goldfile, String string)
+    public static boolean compareLinesWithGold(String goldfile, List<String> lines)
             throws IOException {
-        return Files.readAllLines(Paths.get(goldfile)).stream().collect(
-                Collectors.joining(System.getProperty("line.separator")))
-                .equals(string);
+        return Files.readAllLines(Paths.get(goldfile)).equals(lines);
     }
 }
