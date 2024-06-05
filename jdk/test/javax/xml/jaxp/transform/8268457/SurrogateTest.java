@@ -25,8 +25,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -43,15 +45,11 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import org.testng.Assert;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
-
 /*
  * @test
  * @bug 8268457
  * @library /test/lib
- * @run main/othervm transform.SurrogateTest
+ * @run main/othervm SurrogateTest
  * @summary XML Transformer outputs Unicode supplementary character incorrectly to HTML
  */
 public class SurrogateTest {
@@ -77,6 +75,9 @@ public class SurrogateTest {
             t.transform(src, res);
         }
         compareWithGold(expected, out);
+        if (!compareWithGold(expected, out)) {
+            throw new RuntimeException("toHTMLTest failed");
+        }
     }
 
     public void handlerTest() throws Exception {
@@ -87,6 +88,9 @@ public class SurrogateTest {
         TestHandler th = new TestHandler();
         sp.parse(xmlFile, th);
         compareStringWithGold(TEST_SRC + File.separator + "SurrogateTest2.txt", th.sb.toString());
+        if (!compareLinesWithGold(TEST_SRC + File.separator + "SurrogateTest2.txt", th.lines)) {
+            throw new RuntimeException("handlerTest failed");
+        }
     }
 
     private static class TestHandler extends DefaultHandler {
