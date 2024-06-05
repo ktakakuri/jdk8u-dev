@@ -78,7 +78,9 @@ public class SurrogateTest {
             Result res = new StreamResult(fos);
             t.transform(src, res);
         }
-        Assert.assertTrue(compareWithGold(expected, out));
+        if (!compareWithGold(expected, out)) {
+            throw new RuntimeException("toHTMLTest failed");
+        }
     }
 
     public void handlerTest() throws Exception {
@@ -88,7 +90,9 @@ public class SurrogateTest {
         SAXParser sp = spf.newSAXParser();
         TestHandler th = new TestHandler();
         sp.parse(xmlFile, th);
-        Assert.assertTrue(compareLinesWithGold(TEST_SRC + File.separator + "SurrogateTest2.txt", th.lines));
+        if (!compareLinesWithGold(TEST_SRC + File.separator + "SurrogateTest2.txt", th.lines)) {
+            throw new RuntimeException("handlerTest failed");
+        }
     }
 
     private static class TestHandler extends DefaultHandler {
